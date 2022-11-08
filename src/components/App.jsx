@@ -1,70 +1,50 @@
 import React, { Component } from 'react';
-import { Section } from './Section/Section';
-import ContactForm from './ContactForm/ContactForm';
-import { ContactList } from './ContactList/ContactList';
-import Filter from './Filter/Filter';
-
-const LS_KEY = 'contact-details';
+import Searchbar from './Searchbar/Searchbar';
+import * as API from './services/api';
 
 class App extends Component {
   state = {
-    contacts: [
-      { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
-      { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-      { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-      { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-    ],
-    filter: '',
+    query: '',
+    page: 1,
+    images: [],
+    isLoading: false,
   };
 
-  addContact = (name, number, id) => {
-    this.setState(prevState => {
-      return {
-        contacts: [
-          ...prevState.contacts,
-          { name: name, number: number, id: id },
-        ],
-      };
-    });
-  };
+  handleFormSubmit = (query) => {
+    this.setState({ page:1, query, images:[] });
+  }
 
-  deleteContact = contactId => {
-    this.setState(prevState => ({
-      contacts: prevState.contacts.filter(contact => contact.id !== contactId),
-    }));
-  };
+  // addImages = async ({query}) => {
+  //   this.setState({ isLoading: true });
+  //   const image = await API.fetchImage(query);
+  //   console.log(image);
+  //   this.setState(state => ({
+  //     images: [...state.images, image],
+  //     isLoading: false,
+  //   }));
+  // }
 
-  filterContacts = e => {
-    this.setState({ filter: e.target.value });
+  async componentDidUpdate(prevProps, prevState) {
+    const { query, page } = this.state;
 
-  };
-
-  renderContacts = () => {
-    const normalizedFilter = this.state.filter.toLowerCase();
+  if (prevState.query !== query || prevState.page !== page) {
+    this.setState({ isLoading: true });
+    try {
+      const image = await API.fetchImage(query, page);
+      console.log(image.hits);
+      this.setState(state => ({
+        images: [...state.images, ...image.hits],
+        isLoading: false,
+      }));
+    }
+    catch (error) {
+      throw new Error ('There is no images found for your request! Please, try more :)')
+    }
     
-    const visibleContact = this.state.contacts.filter(contact => contact.name.toLowerCase().includes(normalizedFilter));
-
-    return visibleContact;
   }
-
-  
-  componentDidMount() { 
-    const savedData = localStorage.getItem(LS_KEY);
-    if (savedData) {
-      this.setState({ contacts: JSON.parse(savedData) });
-    }
-  }
-  
-  componentDidUpdate(prevProps, prevState) {
-    const { contacts } = this.state;
-    if (prevState.contacts !== contacts) {
-      localStorage.setItem(LS_KEY, JSON.stringify(contacts));
-    }
-  }
+}
 
   render() {
-    // const name = this.state;
-
 
     return (
       <div
@@ -78,24 +58,7 @@ class App extends Component {
           color: '#010101',
         }}
       >
-        <Section title="Phonebook">
-          <ContactForm
-            items={this.state.contacts}
-            addContactsProps={this.addContact}
-          ></ContactForm>
-        </Section>
-
-        <Section title="Contacts">
-          <Filter
-            value={this.state.filter}
-            onChangeProps={this.filterContacts}>
-          </Filter>
-
-          <ContactList
-            items={this.renderContacts()}
-            deleteContactProps={this.deleteContact}
-          ></ContactList>
-        </Section>
+        <Searchbar onSubmit={ this.handleFormSubmit} />
       </div>
     );
   }
