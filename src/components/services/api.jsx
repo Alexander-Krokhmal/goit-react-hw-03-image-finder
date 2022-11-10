@@ -20,17 +20,17 @@ export const fetchImage = async (query = 'cat', page = 1) => {
             orientation,
             safesearch,
             per_page: 12,
-            page: {page},
-            q: {query},
+            page,
+            q: query,
         }
     };
 
     const response = await axios.get(BASE_URL, options);
-    console.log(response);
-    if (!response.ok) {
-        throw new Error ('There is no images found for your request! Try more :)')
-    }
+    // console.log(response);
+    // if (!response.ok) {
+    //     throw new Error ('There is no images found for your request! Try more :)')
+    // }
     
-    console.log(response.data);
+    // console.log(response.data);
     return response.data;
 }
